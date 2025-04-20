@@ -72,7 +72,7 @@ class ControlPanel:
         
         if path.is_file():
             # Check if it's a video file
-            video_extensions = ('.mp4', '.avi', '.mov', '.mkv')
+            video_extensions = ('.mp4', '.avi', '.mov', '.mkv', '.m4v', '.webm', '.flv', '.wmv', '.mpg', '.mpeg', '.m4v', '.webm', '.flv', '.wmv', '.mpg', '.mpeg')
             if path.suffix.lower() in video_extensions:
                 return 'video'
             
