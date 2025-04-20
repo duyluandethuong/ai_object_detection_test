@@ -4,6 +4,7 @@ from pathlib import Path
 from ultralytics import YOLO
 import utils
 import torch
+from tqdm import tqdm
 
 def main():
     parser = argparse.ArgumentParser(description="Image/Video Object Detection using YOLOv8")
@@ -54,7 +55,7 @@ def main():
             return
 
         print(f"\nProcessing {len(image_files)} images...")
-        for image_path in image_files:
+        for image_path in tqdm(image_files, desc="Processing images"):
             utils.process_image(model, image_path, output_dir)
 
     elif args.video:
@@ -63,7 +64,7 @@ def main():
         if not video_path.exists():
             print(f"Error: Video not found at {args.video}")
             return
-        utils.process_video(model, video_path, output_dir)
+        utils.process_video(model, video_path, output_dir, progress_bar=True)
 
     else:
         print("Please provide either --image, --folder, or --video argument")

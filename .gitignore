@@ -56,4 +56,4 @@ htmlcov/
 .env
 .env.local 
 
-.output_*/
+.output_results/*

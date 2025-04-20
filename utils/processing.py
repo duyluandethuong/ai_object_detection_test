@@ -1,6 +1,7 @@
 import time
 import cv2
 from pathlib import Path
+from tqdm import tqdm
 from .visualization import draw_detection
 
 def process_image(model, image_path, output_dir):
@@ -12,7 +13,7 @@ def process_image(model, image_path, output_dir):
         # Read image
         img = cv2.imread(str(image_path))
         if img is None:
-            print(f"Error: Could not read image {image_path}")
+            tqdm.write(f"Error: Could not read image {image_path}")
             return
 
         # Perform detection
@@ -50,15 +51,15 @@ def process_image(model, image_path, output_dir):
         
         # Calculate and print processing time for this image
         image_processing_time = time.time() - image_start_time
-        print(f"\nProcessed {image_path.name}:")
-        print(f"  - Time taken: {image_processing_time:.2f} seconds")
-        print(f"  - Objects detected: {len(class_detections)}")
-        print(f"  - Saved to: {output_path}")
+        tqdm.write(f"\nProcessed {image_path.name}:")
+        tqdm.write(f"  - Time taken: {image_processing_time:.2f} seconds")
+        tqdm.write(f"  - Objects detected: {len(class_detections)}")
+        tqdm.write(f"  - Saved to: {output_path}")
         
     except Exception as e:
-        print(f"Error processing image {image_path}: {str(e)}")
+        tqdm.write(f"Error processing image {image_path}: {str(e)}")
 
-def process_video(model, video_path, output_dir):
+def process_video(model, video_path, output_dir, progress_bar=True):
     """Process a video file and save the result"""
     try:
         # Start timing
@@ -67,7 +68,7 @@ def process_video(model, video_path, output_dir):
         # Open video file
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
-            print(f"Error: Could not open video {video_path}")
+            tqdm.write(f"Error: Could not open video {video_path}")
             return
 
         # Get video properties
@@ -82,15 +83,18 @@ def process_video(model, video_path, output_dir):
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
 
-        print(f"\nProcessing video: {video_path.name}")
-        print(f"  - Resolution: {width}x{height}")
-        print(f"  - FPS: {fps}")
-        print(f"  - Total frames: {total_frames}")
-        print(f"  - Duration: {total_seconds:.1f} seconds")
+        tqdm.write(f"\nProcessing video: {video_path.name}")
+        tqdm.write(f"  - Resolution: {width}x{height}")
+        tqdm.write(f"  - FPS: {fps}")
+        tqdm.write(f"  - Total frames: {total_frames}")
+        tqdm.write(f"  - Duration: {total_seconds:.1f} seconds")
 
         frame_count = 0
         last_progress_time = time.time()
         progress_interval = 5  # Show progress every 5 seconds
+
+        # Create progress bar
+        pbar = tqdm(total=total_frames, desc="Processing video", unit="frames", position=0, leave=True)
 
         while cap.isOpened():
             ret, frame = cap.read()
@@ -129,20 +133,24 @@ def process_video(model, video_path, output_dir):
             # Write frame to output video
             out.write(frame)
             frame_count += 1
+            pbar.update(1)
 
-            # Print progress every 5 seconds
+            # Update progress info every 5 seconds
             current_time = time.time()
             if current_time - last_progress_time >= progress_interval:
                 elapsed_seconds = current_time - video_start_time
                 processed_seconds = frame_count / fps
                 remaining_seconds = total_seconds - processed_seconds
-                progress_percent = (processed_seconds / total_seconds) * 100
+                current_fps = frame_count/elapsed_seconds
                 
-                print(f"  - Progress: {progress_percent:.1f}% ({processed_seconds:.1f}s / {total_seconds:.1f}s)")
-                print(f"  - Elapsed time: {elapsed_seconds:.1f}s")
-                print(f"  - Estimated time remaining: {remaining_seconds:.1f}s")
-                print(f"  - Current FPS: {frame_count/elapsed_seconds:.1f}")
+                pbar.set_postfix({
+                    'FPS': f'{current_fps:.1f}',
+                    'ETA': f'{remaining_seconds:.1f}s'
+                })
                 last_progress_time = current_time
+
+        # Close progress bar
+        pbar.close()
 
         # Release resources
         cap.release()
@@ -150,10 +158,10 @@ def process_video(model, video_path, output_dir):
 
         # Calculate and print processing time
         video_processing_time = time.time() - video_start_time
-        print(f"\nVideo processing completed:")
-        print(f"  - Time taken: {video_processing_time:.2f} seconds")
-        print(f"  - Average FPS: {frame_count/video_processing_time:.2f}")
-        print(f"  - Saved to: {output_path}")
+        tqdm.write(f"\nVideo processing completed:")
+        tqdm.write(f"  - Time taken: {video_processing_time:.2f} seconds")
+        tqdm.write(f"  - Average FPS: {frame_count/video_processing_time:.2f}")
+        tqdm.write(f"  - Saved to: {output_path}")
         
     except Exception as e:
-        print(f"Error processing video {video_path}: {str(e)}") 
+        tqdm.write(f"Error processing video {video_path}: {str(e)}") 

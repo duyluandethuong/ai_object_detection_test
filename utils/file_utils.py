@@ -4,7 +4,7 @@ from pathlib import Path
 def create_output_dir():
     """Create output directory with timestamp inside an 'output' folder"""
     # Create main output directory if it doesn't exist
-    main_output_dir = Path("output")
+    main_output_dir = Path("output_results")
     main_output_dir.mkdir(exist_ok=True)
     
     # Create timestamped subdirectory
