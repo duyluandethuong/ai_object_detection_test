@@ -57,3 +57,4 @@ htmlcov/
 .env.local 
 
 .output_results/*
+sample_video
