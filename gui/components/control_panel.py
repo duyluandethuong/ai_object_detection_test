@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 import utils.file_utils as file_utils
+import torch
 
 class ControlPanel:
     def __init__(self, root, theme_manager, preview_manager, on_process_callback, on_cancel_callback, on_show_output_callback):
@@ -16,6 +17,8 @@ class ControlPanel:
         self.model_path = tk.StringVar(value="yolov8m.pt")
         self.selected_path = tk.StringVar()
         self.input_type = None
+        self.progress_var = tk.DoubleVar()
+        self.fps_var = tk.StringVar(value="0.0 FPS")
         
     def setup_control_panel(self, parent):
         """Setup the control panel with all controls"""
@@ -29,6 +32,26 @@ class ControlPanel:
         model_combo = ttk.Combobox(model_frame, textvariable=self.model_path, state="readonly", width=30)
         model_combo['values'] = ("yolov8n.pt", "yolov8s.pt", "yolov8m.pt", "yolov8l.pt", "yolov8x.pt")
         model_combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Device info
+        device_frame = ttk.Frame(control_frame)
+        device_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(device_frame, text="Device", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, 10))
+        self.device_label = ttk.Label(device_frame, text="CPU")
+        self.device_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # Progress bar
+        progress_frame = ttk.Frame(control_frame)
+        progress_frame.pack(fill=tk.X, pady=(0, 10))
+        self.progress_bar = ttk.Progressbar(progress_frame, variable=self.progress_var, maximum=100)
+        self.progress_bar.pack(fill=tk.X, expand=True)
+        
+        # FPS display
+        fps_frame = ttk.Frame(control_frame)
+        fps_frame.pack(fill=tk.X, pady=(0, 10))
+        ttk.Label(fps_frame, text="Processing Speed", style="Subtitle.TLabel").pack(side=tk.LEFT, padx=(0, 10))
+        self.fps_label = ttk.Label(fps_frame, textvariable=self.fps_var)
+        self.fps_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # File selection
         file_frame = ttk.Frame(control_frame)
@@ -143,4 +166,19 @@ class ControlPanel:
         
     def enable_output_button(self):
         """Enable the output folder button"""
-        self.output_button.config(state=tk.NORMAL) 
+        self.output_button.config(state=tk.NORMAL)
+        
+    def update_device_info(self, device):
+        """Update the device information label"""
+        device_text = "CPU"
+        if device == "cuda":
+            device_text = f"CUDA ({torch.cuda.get_device_name(0)})"
+        elif device == "mps":
+            device_text = "MPS (Metal Performance Shaders)"
+        self.device_label.config(text=device_text)
+        
+    def update_progress(self, value, fps=None):
+        """Update the progress bar and FPS display"""
+        self.progress_var.set(value)
+        if fps is not None:
+            self.fps_var.set(f"{fps:.1f} FPS") 

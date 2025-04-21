@@ -94,6 +94,9 @@ class ObjectDetectionApp:
             device = device_utils.get_device()
             device_utils.print_device_info(device)
             
+            # Update device info in UI
+            self.root.after(0, lambda: self.control_panel.update_device_info(device))
+            
             # Load selected YOLOv8 model
             model = YOLO(self.control_panel.model_path.get())
             model.to(device)
@@ -103,10 +106,13 @@ class ObjectDetectionApp:
             
             # Start timing
             start_time = time.time()
+            last_progress_time = time.time()
+            processed_frames = 0
             
             if self.control_panel.input_type == 'image':
                 image_path = Path(self.control_panel.selected_path.get())
                 self.process_image(model, image_path, self.output_dir)
+                self.root.after(0, lambda: self.control_panel.update_progress(100))
                 
             elif self.control_panel.input_type == 'folder':
                 folder_path = Path(self.control_panel.selected_path.get())
@@ -116,10 +122,19 @@ class ObjectDetectionApp:
                     tk.messagebox.showerror("Error", f"No images found in {folder_path}")
                     return
                     
-                for image_path in tqdm(image_files, desc="Processing images"):
+                total_images = len(image_files)
+                for i, image_path in enumerate(image_files):
                     if self.should_stop:
                         break
                     self.process_image(model, image_path, self.output_dir)
+                    
+                    # Update progress
+                    progress = (i + 1) / total_images * 100
+                    current_time = time.time()
+                    if current_time - last_progress_time >= 0.5:  # Update every 0.5 seconds
+                        fps = (i + 1) / (current_time - start_time)
+                        self.root.after(0, lambda: self.control_panel.update_progress(progress, fps))
+                        last_progress_time = current_time
                     
             else:  # video
                 video_path = Path(self.control_panel.selected_path.get())
@@ -183,12 +198,17 @@ class ObjectDetectionApp:
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         fps = cap.get(cv2.CAP_PROP_FPS)
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         # Create video writer
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
         
         # Process frames
+        frame_count = 0
+        start_time = time.time()
+        last_progress_time = time.time()
+        
         while cap.isOpened() and not self.should_stop:
             ret, frame = cap.read()
             if not ret:
@@ -205,6 +225,15 @@ class ObjectDetectionApp:
             
             # Update preview
             self.root.after(0, lambda: self.preview_manager.update_video_preview(annotated_frame))
+            
+            # Update progress
+            frame_count += 1
+            progress = (frame_count / total_frames) * 100
+            current_time = time.time()
+            if current_time - last_progress_time >= 0.5:  # Update every 0.5 seconds
+                processing_fps = frame_count / (current_time - start_time)
+                self.root.after(0, lambda: self.control_panel.update_progress(progress, processing_fps))
+                last_progress_time = current_time
             
         cap.release()
         out.release()

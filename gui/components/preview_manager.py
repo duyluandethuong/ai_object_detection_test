@@ -68,6 +68,9 @@ class PreviewManager:
             
     def show_video_preview(self, video_path):
         """Display video preview in the original canvas"""
+        if self.video_capture is not None:
+            self.video_capture.release()
+            
         self.video_capture = cv2.VideoCapture(video_path)
         if not self.video_capture.isOpened():
             raise Exception("Failed to open video file")
@@ -95,6 +98,7 @@ class PreviewManager:
                 # Schedule next update
                 self.root.after(30, update_preview)
             else:
+                # Loop the video
                 self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 self.root.after(30, update_preview)
                 
