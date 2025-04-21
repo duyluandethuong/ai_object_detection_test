@@ -20,9 +20,10 @@ def main():
     device = utils.get_device()
     utils.print_device_info(device)
 
-    # Load selected YOLOv8 model
+    # Load selected YOLOv8 model with verbosity set to 0 to suppress logs
     print(f"Loading model: {args.model}")
     model = YOLO(args.model)
+    model.verbose = False  # Disable YOLO model logging
     model.to(device)
 
     # Create output directory

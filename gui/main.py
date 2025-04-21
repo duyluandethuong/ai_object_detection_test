@@ -161,7 +161,7 @@ class ObjectDetectionApp:
             return
             
         # Process single image
-        results = model(image_path)
+        results = model(image_path, verbose=False)
         # Save results
         for r in results:
             im_path = output_dir / f"{image_path.stem}_result{image_path.suffix}"
@@ -195,7 +195,7 @@ class ObjectDetectionApp:
                 break
                 
             # Process frame
-            results = model(frame)
+            results = model(frame, verbose=False)
             
             # Get annotated frame
             annotated_frame = results[0].plot()

@@ -17,7 +17,7 @@ def process_image(model, image_path, output_dir):
             return
 
         # Perform detection
-        results = model(img)
+        results = model(img, verbose=False)
         
         # Track highest confidence detections for each class
         class_detections = {}
@@ -102,7 +102,7 @@ def process_video(model, video_path, output_dir, progress_bar=True):
                 break
 
             # Perform detection
-            results = model(frame)
+            results = model(frame, verbose=False)
             
             # Track highest confidence detections for each class
             class_detections = {}
